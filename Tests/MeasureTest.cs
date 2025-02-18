@@ -19,6 +19,9 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
 // DEALINGS IN THE SOFTWARE.
 
+using System.Diagnostics;
+using Duplicati.StreamUtil;
+
 namespace Tests;
 
 public class MeasureTest
@@ -31,12 +34,12 @@ public class MeasureTest
         source.SetLength(1024 * 1024 * 200); // 100 MB
         var target = new MemoryStream();
 
-        var throttleManager = new StreamUtil.ThrottleManager
+        var throttleManager = new ThrottleManager
         {
             Limit = 1024 * 1024 * 10 // 10 MB/s
         };
-        var throttledStream = new StreamUtil.ThrottleEnabledStream(source, throttleManager);
-        var measureStream = new StreamUtil.SpeedMeasuringStream(throttledStream);
+        var throttledStream = new ThrottleEnabledStream(source, throttleManager);
+        var measureStream = new SpeedMeasuringStream(throttledStream);
 
         var targetTime = TimeSpan.FromSeconds(source.Length / throttleManager.Limit);
 
