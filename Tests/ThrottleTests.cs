@@ -26,16 +26,16 @@ namespace Tests;
 public class ThrottleTests
 {
     [Test]
-    public async Task ThrottleStream()
+    [TestCase(1000,10,0.05)]
+    public async Task ThrottleStream(int testSizeMB, int throttleMBs, double delta)
     {
-        var delta = 0.01;
         var source = new MemoryStream();
-        source.SetLength(1024 * 1024 * 100); // 100 MB
+        source.SetLength(1024 * 1024 * testSizeMB);
         var target = new MemoryStream();
 
         var throttleManager = new ThrottleManager
         {
-            Limit = 1024 * 1024 * 10 // 10 MB/s
+            Limit = 1024 * 1024 * throttleMBs
         };
         var throttledStream = new ThrottleEnabledStream(source, throttleManager);
 
@@ -50,16 +50,16 @@ public class ThrottleTests
     }
 
     [Test]
-    public async Task ThrottleStreamChange()
+    [TestCase(1000,10,0.05)]
+    public async Task ThrottleStreamChange(int testSizeMB, int throttleMBs, double delta)
     {
-        var delta = 0.01;
         var source = new MemoryStream();
-        source.SetLength(1024 * 1024 * 100); // 100 MB
+        source.SetLength(1024 * 1024 * testSizeMB);
         var target = new MemoryStream();
 
         var throttleManager = new ThrottleManager
         {
-            Limit = 1024 * 1024 * 10 // 10 MB/s
+            Limit = 1024 * 1024 * throttleMBs
         };
         var throttledStream = new ThrottleEnabledStream(source, throttleManager);
 
@@ -70,7 +70,7 @@ public class ThrottleTests
 
         // Change throttle limit halfway through
         await Task.Delay((int)(targetTime1.TotalMilliseconds / 2));
-        throttleManager.Limit = 1024 * 1024 * 20; // 20 MB/s
+        throttleManager.Limit = 1024 * 1024 * throttleMBs * 2; 
 
         await copyTask;
         var elapsed = DateTime.Now - start;
