@@ -19,5 +19,5 @@
 // FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER 
 // DEALINGS IN THE SOFTWARE.
 
-await QuickTest.TestTimeoutStream.Run();
-await QuickTest.TestThrottleStream.Run();
+await Duplicati.StreamUtil.QuickTest.TestTimeoutStream.Run();
+await Duplicati.StreamUtil.QuickTest.TestThrottleStream.Run();

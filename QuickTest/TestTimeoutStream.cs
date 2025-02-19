@@ -22,7 +22,7 @@
 using System.Net;
 using Duplicati.StreamUtil;
 
-namespace QuickTest;
+namespace Duplicati.StreamUtil.QuickTest;
 
 public static class TestTimeoutStream
 {
