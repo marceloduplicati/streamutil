@@ -20,7 +20,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System.IO.Pipelines;
-using TimeoutStream = Duplicati.StreamUtil.TimeoutObservingStream;
+using Duplicati.StreamUtil;
 
 namespace Tests;
 
@@ -38,7 +38,7 @@ public class TimeoutTests
         var input = pipe.Reader.AsStream();
 
         var bytes = 1024 * 1024 * 2;
-        var wrapper = new TimeoutStream(input)
+        var wrapper = new TimeoutObservingStream(input)
         {
             ReadTimeout = (int)TimeSpan.FromSeconds(timeoutSeconds).TotalMilliseconds
         };
@@ -62,7 +62,7 @@ public class TimeoutTests
         var input = pipe.Reader.AsStream();
 
         var bytes = 1024 * 1024 * 2;
-        var wrapper = new TimeoutStream(output)
+        var wrapper = new TimeoutObservingStream(output)
         {
             WriteTimeout = (int)TimeSpan.FromSeconds(timeoutSeconds).TotalMilliseconds
         };
@@ -86,7 +86,7 @@ public class TimeoutTests
         var input = pipe.Reader.AsStream();
 
         var bytes = 1024 * 1024 * 2;
-        var wrapper = new TimeoutStream(input)
+        var wrapper = new TimeoutObservingStream(input)
         {
             ReadTimeout = (int)TimeSpan.FromSeconds(timeoutSeconds).TotalMilliseconds
         };
@@ -119,7 +119,7 @@ public class TimeoutTests
         var input = pipe.Reader.AsStream();
 
         var bytes = 1024 * 1024 * 2;
-        var wrapper = new TimeoutStream(output)
+        var wrapper = new TimeoutObservingStream(output)
         {
             WriteTimeout = (int)TimeSpan.FromSeconds(timeoutSeconds).TotalMilliseconds
         };
