@@ -31,11 +31,11 @@ public class ThrottleTests
         source.SetLength(1024 * 1024 * 100); // 100 MB
         var target = new MemoryStream();
 
-        var throttleManager = new StreamUtil.ThrottleManager
+        var throttleManager = new Duplicati.StreamUtil.ThrottleManager
         {
             Limit = 1024 * 1024 * 10 // 10 MB/s
         };
-        var throttledStream = new StreamUtil.ThrottleEnabledStream(source, throttleManager);
+        var throttledStream = new Duplicati.StreamUtil.ThrottleEnabledStream(source, throttleManager);
 
         var start = DateTime.Now;
         await throttledStream.CopyToAsync(target);
@@ -55,11 +55,11 @@ public class ThrottleTests
         source.SetLength(1024 * 1024 * 100); // 100 MB
         var target = new MemoryStream();
 
-        var throttleManager = new StreamUtil.ThrottleManager
+        var throttleManager = new Duplicati.StreamUtil.ThrottleManager
         {
             Limit = 1024 * 1024 * 10 // 10 MB/s
         };
-        var throttledStream = new StreamUtil.ThrottleEnabledStream(source, throttleManager);
+        var throttledStream = new Duplicati.StreamUtil.ThrottleEnabledStream(source, throttleManager);
 
         var targetTime1 = TimeSpan.FromSeconds(source.Length / throttleManager.Limit);
 

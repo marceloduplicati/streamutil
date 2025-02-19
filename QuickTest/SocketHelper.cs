@@ -23,103 +23,102 @@ using System.Net;
 using System.Net.Sockets;
 using System.Text;
 
-namespace QuickTest
+namespace Duplicati.StreamUtil.QuickTest;
+
+public class SocketHelper : IDisposable
 {
-    public class SocketHelper : IDisposable
+    public class SocketHelperConnection : IDisposable
     {
-        public class SocketHelperConnection : IDisposable
-        {
-            private readonly Socket _socket;
-
-            public SocketHelperConnection(Socket socket)
-            {
-                _socket = socket;
-            }
-
-            public async Task<int> ReceiveAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
-            {
-                return await _socket.ReceiveAsync(new ArraySegment<byte>(buffer, offset, count), SocketFlags.None, cancellationToken);
-            }
-
-            public async Task SendAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
-            {
-
-                await _socket.SendAsync(new ArraySegment<byte>(buffer, offset, count), SocketFlags.None, cancellationToken);
-            }
-
-            public async Task SinkAsync(CancellationToken cancellationToken)
-            {
-                var buffer = new byte[1024];
-                while (!cancellationToken.IsCancellationRequested)
-                {
-                    var data = await ReceiveAsync(buffer, 0, buffer.Length, cancellationToken);
-                    if (data == 0)
-                        break;
-
-                    Console.WriteLine($"Received {data} bytes");
-                    Console.WriteLine(Encoding.UTF8.GetString(buffer, 0, data));
-                    Console.WriteLine();
-                }
-            }
-
-            public void Dispose()
-            {
-                _socket.Close();
-                _socket.Dispose();
-            }
-        }
-
         private readonly Socket _socket;
-        private readonly CancellationTokenSource _stopTokenSource = new();
 
-        public SocketHelper(int port)
+        public SocketHelperConnection(Socket socket)
         {
-            _socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
-            _socket.Bind(new IPEndPoint(IPAddress.Any, port));
-            _socket.Listen(10);
+            _socket = socket;
         }
 
-        public async Task<SocketHelperConnection> AcceptAsync()
-            => new SocketHelperConnection(await _socket.AcceptAsync());
+        public async Task<int> ReceiveAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
+        {
+            return await _socket.ReceiveAsync(new ArraySegment<byte>(buffer, offset, count), SocketFlags.None, cancellationToken);
+        }
+
+        public async Task SendAsync(byte[] buffer, int offset, int count, CancellationToken cancellationToken)
+        {
+
+            await _socket.SendAsync(new ArraySegment<byte>(buffer, offset, count), SocketFlags.None, cancellationToken);
+        }
+
+        public async Task SinkAsync(CancellationToken cancellationToken)
+        {
+            var buffer = new byte[1024];
+            while (!cancellationToken.IsCancellationRequested)
+            {
+                var data = await ReceiveAsync(buffer, 0, buffer.Length, cancellationToken);
+                if (data == 0)
+                    break;
+
+                Console.WriteLine($"Received {data} bytes");
+                Console.WriteLine(Encoding.UTF8.GetString(buffer, 0, data));
+                Console.WriteLine();
+            }
+        }
 
         public void Dispose()
         {
-            _stopTokenSource.Cancel();
-            _stopTokenSource.Dispose();
             _socket.Close();
             _socket.Dispose();
         }
+    }
 
-        public static async Task SinkConnectionHttpResponse(int port, CancellationToken cancellationToken, long bytesToRead, Func<Memory<byte>, Task>? onReceive = null)
+    private readonly Socket _socket;
+    private readonly CancellationTokenSource _stopTokenSource = new();
+
+    public SocketHelper(int port)
+    {
+        _socket = new Socket(AddressFamily.InterNetwork, SocketType.Stream, ProtocolType.Tcp);
+        _socket.Bind(new IPEndPoint(IPAddress.Any, port));
+        _socket.Listen(10);
+    }
+
+    public async Task<SocketHelperConnection> AcceptAsync()
+        => new SocketHelperConnection(await _socket.AcceptAsync());
+
+    public void Dispose()
+    {
+        _stopTokenSource.Cancel();
+        _stopTokenSource.Dispose();
+        _socket.Close();
+        _socket.Dispose();
+    }
+
+    public static async Task SinkConnectionHttpResponse(int port, CancellationToken cancellationToken, long bytesToRead, Func<Memory<byte>, Task>? onReceive = null)
+    {
+        await SinkConnection(port, cancellationToken, bytesToRead, onReceive, () => Encoding.UTF8.GetBytes("HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n"));
+    }
+
+    public static async Task SinkConnection(int port, CancellationToken cancellationToken, long bytesToRead, Func<Memory<byte>, Task>? onReceive = null, Func<Memory<byte>>? createResponse = null)
+    {
+        using var socketHelper = new SocketHelper(port);
+        var connection = await socketHelper.AcceptAsync();
+        // await connection.SinkAsync(cancellationToken);
+        var buffer = new byte[1024 * 10];
+        while (!cancellationToken.IsCancellationRequested)
         {
-            await SinkConnection(port, cancellationToken, bytesToRead, onReceive, () => Encoding.UTF8.GetBytes("HTTP/1.1 200 OK\r\nContent-Length: 0\r\n\r\n"));
+            var data = await connection.ReceiveAsync(buffer, 0, (int)Math.Min(buffer.Length, bytesToRead), cancellationToken);
+            if (data == 0)
+                break;
+            bytesToRead -= data;
+
+            if (onReceive != null)
+                await onReceive(buffer.AsMemory(0, data));
+
+            if (bytesToRead <= 0)
+                break;
         }
 
-        public static async Task SinkConnection(int port, CancellationToken cancellationToken, long bytesToRead, Func<Memory<byte>, Task>? onReceive = null, Func<Memory<byte>>? createResponse = null)
+        if (createResponse != null)
         {
-            using var socketHelper = new SocketHelper(port);
-            var connection = await socketHelper.AcceptAsync();
-            // await connection.SinkAsync(cancellationToken);
-            var buffer = new byte[1024 * 10];
-            while (!cancellationToken.IsCancellationRequested)
-            {
-                var data = await connection.ReceiveAsync(buffer, 0, (int)Math.Min(buffer.Length, bytesToRead), cancellationToken);
-                if (data == 0)
-                    break;
-                bytesToRead -= data;
-
-                if (onReceive != null)
-                    await onReceive(buffer.AsMemory(0, data));
-
-                if (bytesToRead <= 0)
-                    break;
-            }
-
-            if (createResponse != null)
-            {
-                var r = createResponse();
-                await connection.SendAsync(r.ToArray(), 0, r.Length, cancellationToken);
-            }
+            var r = createResponse();
+            await connection.SendAsync(r.ToArray(), 0, r.Length, cancellationToken);
         }
     }
 }

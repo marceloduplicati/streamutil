@@ -20,7 +20,7 @@
 // DEALINGS IN THE SOFTWARE.
 
 using System.IO.Pipelines;
-using TimeoutStream = StreamUtil.TimeoutObservingStream;
+using TimeoutStream = Duplicati.StreamUtil.TimeoutObservingStream;
 
 namespace Tests;
 

@@ -21,7 +21,7 @@
 
 using System.Net;
 
-namespace QuickTest;
+namespace Duplicati.StreamUtil.QuickTest;
 
 public static class TestTimeoutStream
 {
@@ -39,7 +39,7 @@ public static class TestTimeoutStream
         var readCount = 0;
         var iteration = 0;
 
-        var pausingStream = new StreamUtil.LambdaInterceptStream(data)
+        var pausingStream = new Duplicati.StreamUtil.LambdaInterceptStream(data)
         {
             PostReadTask = (buffer, offset, count, read) =>
             {
@@ -53,12 +53,12 @@ public static class TestTimeoutStream
             }
         };
 
-        var wrappedStream = new StreamUtil.TimeoutObservingStream(data)
+        var wrappedStream = new Duplicati.StreamUtil.TimeoutObservingStream(data)
         {
             ReadTimeout = 3000
         };
 
-        var completingStream = new StreamUtil.CompletingStream(wrappedStream, () => wrappedStream.CancelTimeout());
+        var completingStream = new Duplicati.StreamUtil.CompletingStream(wrappedStream, () => wrappedStream.CancelTimeout());
 
         var uri = new Uri($"http://localhost:{Port}/");
         var userInfo = new NetworkCredential("user", "pass");
@@ -86,7 +86,7 @@ public static class TestTimeoutStream
         try
         {
             var response = await httpClient.SendAsync(request, HttpCompletionOption.ResponseHeadersRead, wrappedStream.TimeoutToken);
-            var stream = new StreamUtil.TimeoutObservingStream(response.Content.ReadAsStream()) { ReadTimeout = 3000 };
+            var stream = new Duplicati.StreamUtil.TimeoutObservingStream(response.Content.ReadAsStream()) { ReadTimeout = 3000 };
             Console.WriteLine($"Stream type: {stream.GetType().Name}");
             Console.WriteLine($"Stream can timeout: {stream.CanTimeout}");
         }

@@ -31,12 +31,12 @@ public class MeasureTest
         source.SetLength(1024 * 1024 * 200); // 100 MB
         var target = new MemoryStream();
 
-        var throttleManager = new StreamUtil.ThrottleManager
+        var throttleManager = new Duplicati.StreamUtil.ThrottleManager
         {
             Limit = 1024 * 1024 * 10 // 10 MB/s
         };
-        var throttledStream = new StreamUtil.ThrottleEnabledStream(source, throttleManager);
-        var measureStream = new StreamUtil.SpeedMeasuringStream(throttledStream);
+        var throttledStream = new Duplicati.StreamUtil.ThrottleEnabledStream(source, throttleManager);
+        var measureStream = new Duplicati.StreamUtil.SpeedMeasuringStream(throttledStream);
 
         var targetTime = TimeSpan.FromSeconds(source.Length / throttleManager.Limit);
 
